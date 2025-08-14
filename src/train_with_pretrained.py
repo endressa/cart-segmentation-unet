@@ -22,7 +22,7 @@ IMAGES_ROOT = Path("~/sarah/background_segmentation/v2_expansion").expanduser()
 MASKS_ROOT  = Path("~/sarah/background_segmentation/no_hole_masks").expanduser()
 
 # where to save the model + metrics
-CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/no_hole_model_2.pth").expanduser()
+CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/final_mask_model_3.pth").expanduser()
 CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
@@ -347,7 +347,7 @@ def train():
 
     best_val_dice = -1.0
     epochs_no_improve = 0
-    metrics_csv = CHECKPOINT_PATH.parent / "training_metrics_2.csv"
+    metrics_csv = CHECKPOINT_PATH.parent / "training_metrics_3.csv"
     if not metrics_csv.exists():
         with open(metrics_csv, "w", newline="") as f:
             csv.writer(f).writerow([
