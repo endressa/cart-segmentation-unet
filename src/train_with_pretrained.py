@@ -164,7 +164,6 @@ class SegmDataset(Dataset):
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STD  = (0.229, 0.224, 0.225)
 
-# TODO: add random crop
 train_transform = A.Compose([
     A.HorizontalFlip(p=0.5),
     A.Rotate(limit=20, p=0.5),
@@ -317,7 +316,7 @@ def build_loaders(batch_size=BATCH_SIZE):
 # ────────────────────────────────────────────────────────────────────────────────
 def build_model():
     model = smp.Unet(
-        encoder_name="resnet34",
+        encoder_name="efficientnet-b0",
         encoder_weights="imagenet",
         in_channels=3,
         classes=1,
