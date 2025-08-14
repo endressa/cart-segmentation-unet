@@ -22,7 +22,7 @@ IMAGES_ROOT = Path("~/sarah/background_segmentation/v2_expansion").expanduser()
 MASKS_ROOT  = Path("~/sarah/background_segmentation/final_masks").expanduser()
 
 # where to save the model + metrics
-CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/final_mask_model_3.pth").expanduser()
+CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/final_mask_model_4.pth").expanduser()
 CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
@@ -172,7 +172,7 @@ train_transform = A.Compose([
     A.GaussNoise(p=0.15),
     A.MotionBlur(blur_limit=3, p=0.15),
     A.RandomScale(scale_limit=0.12, p=0.5),
-    A.RandomCrop(width=384, height=384, p=0.5),
+    # A.RandomCrop(width=384, height=384, p=0.5),
     A.Resize(IMG_SIZE[0], IMG_SIZE[1], interpolation=cv2.INTER_LINEAR),
     A.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
     ToTensorV2(),
@@ -347,7 +347,7 @@ def train():
 
     best_val_dice = -1.0
     epochs_no_improve = 0
-    metrics_csv = CHECKPOINT_PATH.parent / "training_metrics_3.csv"
+    metrics_csv = CHECKPOINT_PATH.parent / "training_metrics_4.csv"
     if not metrics_csv.exists():
         with open(metrics_csv, "w", newline="") as f:
             csv.writer(f).writerow([
