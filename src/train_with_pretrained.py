@@ -19,7 +19,7 @@ import segmentation_models_pytorch as smp  # pip install segmentation-models-pyt
 # CONFIG (paths are what you showed in your last message)
 # ────────────────────────────────────────────────────────────────────────────────
 IMAGES_ROOT = Path("~/sarah/background_segmentation/v2_expansion").expanduser()
-MASKS_ROOT  = Path("~/sarah/background_segmentation/no_hole_masks").expanduser()
+MASKS_ROOT  = Path("~/sarah/background_segmentation/final_masks").expanduser()
 
 # where to save the model + metrics
 CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/final_mask_model_3.pth").expanduser()
