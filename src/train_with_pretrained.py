@@ -19,15 +19,15 @@ import segmentation_models_pytorch as smp  # pip install segmentation-models-pyt
 # CONFIG (paths are what you showed in your last message)
 # ────────────────────────────────────────────────────────────────────────────────
 IMAGES_ROOT = Path("~/sarah/background_segmentation/v2_expansion").expanduser()
-MASKS_ROOT  = Path("~/sarah/background_segmentation/2000_masks_cleaned").expanduser()
+MASKS_ROOT  = Path("~/sarah/background_segmentation/final_masks_cleaned").expanduser()
 
 # where to save the model + metrics
-CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/small_model_7.pth").expanduser()
+CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/model_8.pth").expanduser()
 CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 # training size (try 512; lower to 384 if VRAM is tight)
-IMG_SIZE: Tuple[int, int] = (224, 224)
+IMG_SIZE: Tuple[int, int] = (512, 512)
 SIDE_PADDING_RATIO = 0.1  # must match what you used when generating masks
 
 BATCH_SIZE = 6          # adjust per VRAM (try 4–8 at 512)
@@ -347,7 +347,7 @@ def train():
 
     best_val_dice = -1.0
     epochs_no_improve = 0
-    metrics_csv = CHECKPOINT_PATH.parent / "training_metrics_7.csv"
+    metrics_csv = CHECKPOINT_PATH.parent / "training_metrics_8.csv"
     if not metrics_csv.exists():
         with open(metrics_csv, "w", newline="") as f:
             csv.writer(f).writerow([
