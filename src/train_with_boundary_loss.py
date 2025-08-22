@@ -23,7 +23,7 @@ IMAGES_ROOT = Path("~/sarah/background_segmentation/v2_expansion").expanduser()
 MASKS_ROOT  = Path("~/sarah/background_segmentation/final_masks_cleaned").expanduser()
 
 # where to save the model + metrics
-CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/model_11.pth").expanduser()
+CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/boundary_loss_model_11.pth").expanduser()
 CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
