@@ -22,7 +22,7 @@ IMAGES_ROOT = Path("~/sarah/background_segmentation/v2_expansion").expanduser()
 MASKS_ROOT  = Path("~/sarah/background_segmentation/2000_masks_cleaned").expanduser()
 
 # where to save the model + metrics
-CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/final_mask_model_6_1.pth").expanduser()
+CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/final_mask_model_6_2.pth").expanduser()
 CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
@@ -348,8 +348,8 @@ def build_loaders(batch_size=BATCH_SIZE):
 # Model factory (SMP UNet with pretrained encoder)
 # ────────────────────────────────────────────────────────────────────────────────
 def build_model():
-    model = smp.Unet(
-        encoder_name="efficientnet-b0",
+    model = smp.DeepLabV3Plus(
+        encoder_name="resnet50",
         encoder_weights="imagenet",
         in_channels=3,
         classes=1,
@@ -380,7 +380,7 @@ def train():
 
     best_val_dice = -1.0
     epochs_no_improve = 0
-    metrics_csv = CHECKPOINT_PATH.parent / "training_metrics_6_1.csv"
+    metrics_csv = CHECKPOINT_PATH.parent / "training_metrics_6_2.csv"
     if not metrics_csv.exists():
         with open(metrics_csv, "w", newline="") as f:
             csv.writer(f).writerow([
