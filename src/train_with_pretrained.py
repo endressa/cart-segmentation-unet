@@ -19,10 +19,10 @@ import segmentation_models_pytorch as smp  # pip install segmentation-models-pyt
 # CONFIG (paths are what you showed in your last message)
 # ────────────────────────────────────────────────────────────────────────────────
 IMAGES_ROOT = Path("~/sarah/background_segmentation/v2_expansion").expanduser()
-MASKS_ROOT  = Path("~/sarah/background_segmentation/2000_masks_cleaned").expanduser()
+MASKS_ROOT  = Path("~/sarah/background_segmentation/final_masks_cleaned").expanduser()
 
 # where to save the model + metrics
-CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/final_mask_model_6_2.pth").expanduser()
+CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/final_mask_model_6_3.pth").expanduser()
 CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
@@ -31,7 +31,7 @@ IMG_SIZE: Tuple[int, int] = (512, 512)
 SIDE_PADDING_RATIO = 0.1  # must match what you used when generating masks
 
 BATCH_SIZE = 6          # adjust per VRAM (try 4–8 at 512)
-EPOCHS = 100
+EPOCHS = 50
 LR = 1e-4
 WEIGHT_DECAY = 1e-4
 PATIENCE = 7            # early stopping on Val Dice (no improvement)
@@ -173,11 +173,6 @@ train_transform = A.Compose([
     A.MotionBlur(blur_limit=3, p=0.15),
     A.RandomScale(scale_limit=0.12, p=0.5),
     # A.RandomCrop(width=384, height=384, p=0.5),
-    # new augms:
-    A.RandomFog(p=0.05),
-    A.Perspective(scale=(0.02, 0.06), p=0.25),
-    A.ImageCompression(quality_lower=40, quality_upper=95, p=0.3),
-    A.RandomShadow(num_shadows_lower=1, num_shadows_upper=2, p=0.15),
     A.Resize(IMG_SIZE[0], IMG_SIZE[1], interpolation=cv2.INTER_LINEAR),
     A.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
     ToTensorV2(),
@@ -192,34 +187,6 @@ val_transform = A.Compose([
 # ────────────────────────────────────────────────────────────────────────────────
 # Losses & Metrics
 # ────────────────────────────────────────────────────────────────────────────────
-
-class BoundaryLoss(nn.Module):
-    def forward(self, logits, targets):
-        probs = torch.sigmoid(logits)
-        gx = torch.abs(probs[:, :, :, 1:] - probs[:, :, :, :-1])
-        gy = torch.abs(probs[:, :, 1:, :] - probs[:, :, :-1, :])
-        edge = torch.mean(gx) + torch.mean(gy)
-        tgx = torch.abs(targets[:, :, :, 1:] - targets[:, :, :, :-1])
-        tgy = torch.abs(targets[:, :, 1:, :] - targets[:, :, :-1, :])
-        tedge = torch.mean(tgx) + torch.mean(tgy)
-        return torch.abs(edge - tedge)
-
-class ComboLoss(nn.Module):
-    def __init__(self, w_bce=0.5, w_dice=0.45, w_edge=0.05):
-        super().__init__()
-        self.bce = nn.BCEWithLogitsLoss()
-        self.wb, self.wd, self.we = w_bce, w_dice, w_edge
-    def dice(self, logits, targets, smooth=1.0):
-        p = torch.sigmoid(logits)
-        inter = (p*targets).sum((2,3))
-        denom = p.sum((2,3)) + targets.sum((2,3))
-        return 1 - ((2*inter + smooth)/(denom + smooth)).mean()
-    def forward(self, logits, targets):
-        return (self.wb*self.bce(logits, targets) +
-                self.wd*self.dice(logits, targets) +
-                self.we*BoundaryLoss()(logits, targets))
-
-
 class BCEDiceLoss(nn.Module):
     def __init__(self, bce_weight=0.5, smooth=1.0):
         super().__init__()
@@ -348,8 +315,8 @@ def build_loaders(batch_size=BATCH_SIZE):
 # Model factory (SMP UNet with pretrained encoder)
 # ────────────────────────────────────────────────────────────────────────────────
 def build_model():
-    model = smp.DeepLabV3Plus(
-        encoder_name="resnet50",
+    model = smp.Unet(
+        encoder_name="efficientnet-b0",
         encoder_weights="imagenet",
         in_channels=3,
         classes=1,
@@ -363,7 +330,7 @@ def build_model():
 def train():
     train_loader, val_loader = build_loaders(BATCH_SIZE)
     model = build_model()
-    criterion = ComboLoss(w_bce=0.5, w_dice=0.45, w_edge=0.05)
+    criterion = BCEDiceLoss(bce_weight=0.5, smooth=1.0)
 
     # === PHASE 1: Encoder einfrieren ===
     for p in model.encoder.parameters():
@@ -375,12 +342,12 @@ def train():
         {"params": model.segmentation_head.parameters(), "lr": LR}
     ], weight_decay=WEIGHT_DECAY)
 
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=EPOCHS//2, T_mult=1)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
     scaler = torch.cuda.amp.GradScaler(enabled=USE_AMP)
 
     best_val_dice = -1.0
     epochs_no_improve = 0
-    metrics_csv = CHECKPOINT_PATH.parent / "training_metrics_6_2.csv"
+    metrics_csv = CHECKPOINT_PATH.parent / "training_metrics_6_3.csv"
     if not metrics_csv.exists():
         with open(metrics_csv, "w", newline="") as f:
             csv.writer(f).writerow([
@@ -433,7 +400,6 @@ def train():
                 logits = model(data)
                 loss = criterion(logits, target)
                 val_loss += loss.item()
-                edge_l = BoundaryLoss()(logits, target).item()
 
                 dice_vals.append(dice_metric(logits, target))
                 iou_vals.append(iou_metric(logits, target, t=0.5))
