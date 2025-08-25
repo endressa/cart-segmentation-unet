@@ -321,8 +321,8 @@ def build_loaders(batch_size=BATCH_SIZE):
             )
 
             # now bring BOTH to the SAME size before Albumentations
-            img_resized  = raw_img # cv2.resize(raw_img,  IMG_SIZE, interpolation=cv2.INTER_LINEAR)
-            mask_resized = raw_mask # cv2.resize(raw_mask, IMG_SIZE, interpolation=cv2.INTER_NEAREST)
+            img_resized  = cv2.resize(raw_img,  IMG_SIZE, interpolation=cv2.INTER_LINEAR)
+            mask_resized = cv2.resize(raw_mask, IMG_SIZE, interpolation=cv2.INTER_NEAREST)
 
             if self.transform:
                 aug   = self.transform(image=img_resized, mask=mask_resized)
