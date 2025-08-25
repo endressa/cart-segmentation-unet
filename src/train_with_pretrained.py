@@ -31,7 +31,7 @@ IMG_SIZE: Tuple[int, int] = (512, 512)
 SIDE_PADDING_RATIO = 0.1  # must match what you used when generating masks
 
 BATCH_SIZE = 6          # adjust per VRAM (try 4–8 at 512)
-EPOCHS = 50
+EPOCHS = 100
 LR = 1e-4
 WEIGHT_DECAY = 1e-4
 PATIENCE = 7            # early stopping on Val Dice (no improvement)
