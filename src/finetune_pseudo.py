@@ -32,7 +32,7 @@ IMG_SIZE = (512, 512)
 SIDE_PADDING_RATIO = 0.1      # keep consistent with training
 USE_IMAGENET_NORM = True      # True = ImageNet mean/std, matches your main training
 BATCH_SIZE = 8
-EPOCHS = 12
+EPOCHS = 80
 
 # --- NEW: split LRs + warmup ---
 HEAD_LR = 3e-5       # decoder + segmentation head
@@ -40,7 +40,7 @@ ENCODER_LR = 1e-5    # encoder (≈ 0.3 × head LR)
 WARMUP_EPOCHS = 3    # freeze encoder for first N epochs
 
 WEIGHT_DECAY = 1e-4
-PATIENCE = 5
+PATIENCE = 8
 SEED = 42
 NUM_WORKERS = 2
 USE_AMP = True
