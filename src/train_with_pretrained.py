@@ -31,7 +31,7 @@ PSEUDO_MASK_ROOT = Path("~/sarah/background_segmentation/dataset/pseudo_masks").
 # How much to trust pseudo labels compared to clean (0.3–0.7 is typical)
 PSEUDO_LOSS_WEIGHT = 0.5
 # where to save the model + metrics
-CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/pseudo_model_12.pth").expanduser()
+CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/pseudo_model_clean_13.pth").expanduser()
 CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
@@ -561,8 +561,8 @@ def train():
 
     # Ergebnisse neben dem .pth sichern
     import json
-    thr_json = CHECKPOINT_PATH.with_suffix(".threshold_12.json")
-    thr_txt  = CHECKPOINT_PATH.with_suffix(".threshold_12.txt")
+    thr_json = CHECKPOINT_PATH.with_suffix(".threshold.json")
+    thr_txt  = CHECKPOINT_PATH.with_suffix(".threshold.txt")
     with open(thr_json, "w") as f:
         json.dump(best, f, indent=2)
     with open(thr_txt, "w") as f:
