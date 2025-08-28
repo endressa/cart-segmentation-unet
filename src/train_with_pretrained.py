@@ -25,13 +25,13 @@ import numpy as np
 CLEAN_IMG_ROOT  = Path("~/sarah/background_segmentation/dataset/images_cleaned").expanduser()
 CLEAN_MASK_ROOT = Path("~/sarah/background_segmentation/dataset/final_masks_cleaned").expanduser()
 
-PSEUDO_IMG_ROOT  = Path("~/sarah/background_segmentation/dataset/images_pseudo").expanduser()
-PSEUDO_MASK_ROOT = Path("~/sarah/background_segmentation/dataset/pseudo_masks").expanduser()
+PSEUDO_IMG_ROOT  = Path("~/sarah/background_segmentation/dataset/images_pseudo_2").expanduser()
+PSEUDO_MASK_ROOT = Path("~/sarah/background_segmentation/dataset/pseudo_masks_2").expanduser()
 
 # How much to trust pseudo labels compared to clean (0.3–0.7 is typical)
 PSEUDO_LOSS_WEIGHT = 0.5
 # where to save the model + metrics
-CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/pseudo_model_clean_13.pth").expanduser()
+CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/pseudo_model_14.pth").expanduser()
 CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
