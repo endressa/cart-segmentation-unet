@@ -16,7 +16,7 @@ from albumentations.pytorch import ToTensorV2
 import segmentation_models_pytorch as smp
 
 # ---------------- PATHS (your values) ----------------
-CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/pseudo_model_12.pth").expanduser()
+CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/pseudo_model_14.pth").expanduser()
 CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 # hard-corrected data (letterboxed 512×512 PNG masks)
@@ -25,7 +25,7 @@ HARD_MASK_ROOT = Path("~/sarah/background_segmentation/dataset/masks_hard").expa
 
 # output checkpoint
 CKPT_IN  = CHECKPOINT_PATH                                  
-CKPT_OUT = CHECKPOINT_PATH.with_name("finetuned_model_12.pth")
+CKPT_OUT = CHECKPOINT_PATH.with_name("finetuned_model_14.pth")
 
 # ---------------- TRAINING KNOBS ----------------
 IMG_SIZE = (512, 512)
