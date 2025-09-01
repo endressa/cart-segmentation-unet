@@ -232,42 +232,29 @@ def build_all_loaders(val_frac=0.1):
     tf_train = make_transform(train=True)
     tf_val   = make_transform(train=False)
 
-    # drei Quellen für den Gesamtdatensatz
-    hard_ds    = PairDataset(HARD_IMG_ROOT, HARD_MASK_ROOT, transform=tf_train, weight=1.0)
-    clean_ds   = PairDataset(CLEANED_IMG_ROOT, CLEANED_MASKS_ROOT, transform=tf_train, weight=1.0)
-    pseudo_ds  = PairDataset(PSEUDO_IMG_ROOT, PSEUDO_MASK_ROOT, transform=tf_train, weight=0.5)
+    # TRAIN: all sources (pseudo weighted 0.5)
+    hard_train   = PairDataset(HARD_IMG_ROOT,   HARD_MASK_ROOT,   transform=tf_train, weight=1.0)
+    clean_train  = PairDataset(CLEANED_IMG_ROOT,CLEANED_MASKS_ROOT,transform=tf_train, weight=1.0)
+    pseudo_train = PairDataset(PSEUDO_IMG_ROOT, PSEUDO_MASK_ROOT, transform=tf_train, weight=0.5)
+    full_train   = ConcatDataset([hard_train, clean_train, pseudo_train])
 
+    # VAL: real labels only (no pseudo), no aug
+    hard_val   = PairDataset(HARD_IMG_ROOT,   HARD_MASK_ROOT,   transform=tf_val, weight=1.0)
+    clean_val  = PairDataset(CLEANED_IMG_ROOT,CLEANED_MASKS_ROOT,transform=tf_val, weight=1.0)
+    full_val   = ConcatDataset([hard_val, clean_val])
 
-    # alles zusammen
-    full_ds = ConcatDataset([hard_ds, clean_ds, pseudo_ds])
-
-    # zufällig in Train/Val splitten
-    n = len(full_ds)
+    # Optional: random sub-split of train (not val!) if you still want val_frac from real-only
+    n = len(full_train)
     rng = np.random.RandomState(SEED)
     idx = rng.permutation(n)
-    n_val = max(1, int(val_frac * n))
-    val_idx = idx[:n_val].tolist()
-    train_idx = idx[n_val:].tolist()
+    train_idx = idx.tolist()
 
-    # SubsetWrapper für unterschiedliche Transforms
-    class TransformingSubset(torch.utils.data.Subset):
-        def __init__(self, dataset, indices, transform):
-            super().__init__(dataset, indices)
-            self.transform = transform
-        def __getitem__(self, idx):
-            x, y, w = super().__getitem__(idx)
-            # wende hier transform an
-            augmented = self.transform(image=x.permute(1,2,0).numpy())  # zurück nach HWC
-            x_new = augmented["image"]
-            return x_new, y, w
-
-    train_ds = TransformingSubset(full_ds, train_idx, tf_train)
-    val_ds   = TransformingSubset(full_ds, val_idx, tf_val)
+    train_ds = Subset(full_train, train_idx)
 
     train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True,
                               num_workers=NUM_WORKERS, pin_memory=(DEVICE.type=="cuda"))
-    val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE, shuffle=False,
-                            num_workers=NUM_WORKERS, pin_memory=(DEVICE.type=="cuda"))
+    val_loader   = DataLoader(full_val, batch_size=BATCH_SIZE, shuffle=False,
+                              num_workers=NUM_WORKERS, pin_memory=(DEVICE.type=="cuda"))
     return train_loader, val_loader
 
 # ---------------- FINETUNE ----------------
