@@ -23,12 +23,18 @@ CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
 HARD_IMG_ROOT  = Path("~/sarah/background_segmentation/dataset/images_hard").expanduser()
 HARD_MASK_ROOT = Path("~/sarah/background_segmentation/dataset/masks_hard").expanduser()
 
+CLEANED_IMG_ROOT = Path("~/sarah/background_segmentation/dataset/images_cleaned").expanduser()
+CLEANED_MASKS_ROOT = Path("~/sarah/background_segmentation/dataset/final_masks_cleaned").expanduser()
+
+PSEUDO_IMG_ROOT   = Path("~/sarah/background_segmentation/dataset/images_pseudo_224").expanduser()
+PSEUDO_MASK_ROOT  = Path("~/sarah/background_segmentation/dataset/pseudo_masks_224").expanduser()
+
 # output checkpoint
 CKPT_IN  = CHECKPOINT_PATH                                  
-CKPT_OUT = CHECKPOINT_PATH.with_name("finetuned_model_15.pth")
+CKPT_OUT = CHECKPOINT_PATH.with_name("224_finetuned_model_15.pth")
 
 # ---------------- TRAINING KNOBS ----------------
-IMG_SIZE = (512, 512)
+IMG_SIZE = (224, 224)
 SIDE_PADDING_RATIO = 0.1      # keep consistent with training
 USE_IMAGENET_NORM = True      # True = ImageNet mean/std, matches your main training
 BATCH_SIZE = 8
@@ -62,14 +68,19 @@ def letterbox_image_with_side_padding(image, padding_color=(0,0,0), side_padding
     return canvas
 
 def make_transform(train=True):
-    if USE_IMAGENET_NORM:
-        mean=(0.485, 0.456, 0.406); std=(0.229, 0.224, 0.225)
-    else:
-        mean=(0,0,0); std=(1,1,1)
+    mean=(0.485, 0.456, 0.406); std=(0.229, 0.224, 0.225)
+
     aug = [A.Resize(IMG_SIZE[0], IMG_SIZE[1], interpolation=cv2.INTER_LINEAR)]
-    # (optional) add light jitter/flip here if you want
+
+    if train:
+        aug = [
+            A.HorizontalFlip(p=0.5),
+            A.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.05, p=0.3),
+        ] + aug
+
     aug += [A.Normalize(mean=mean, std=std), ToTensorV2()]
     return A.Compose(aug)
+
 
 
 # ---- Helpers for differential LRs and encoder warmup ----
@@ -114,15 +125,12 @@ class EncoderWarmupController:
                 g["params"] = [p for p in g["params"] if p.requires_grad]
 
 # ---------------- DATASET ----------------
-class HardSegmDataset(Dataset):
-    """
-    Expects images under HARD_IMG_ROOT and masks under HARD_MASK_ROOT,
-    same relative structure; masks are 512×512 letterboxed PNGs (0/255).
-    """
-    def __init__(self, img_root: Path, mask_root: Path, transform=None):
+class PairDataset(Dataset):
+    def __init__(self, img_root: Path, mask_root: Path, transform=None, weight=1.0):
         self.img_root = Path(img_root)
         self.mask_root = Path(mask_root)
         self.transform = transform
+        self.weight = weight
         image_exts = {".jpg",".jpeg",".png",".bmp",".tif",".tiff"}
         imgs = [p for p in self.img_root.rglob("*") if p.suffix.lower() in image_exts]
         pairs = []
@@ -132,7 +140,7 @@ class HardSegmDataset(Dataset):
             if mp.exists():
                 pairs.append((ip, mp))
         if not pairs:
-            raise RuntimeError(f"No image/mask pairs found under {img_root} / {mask_root}")
+            raise RuntimeError(f"No pairs under {img_root} / {mask_root}")
         self.pairs = pairs
 
     def __len__(self): return len(self.pairs)
@@ -140,23 +148,19 @@ class HardSegmDataset(Dataset):
     def __getitem__(self, idx):
         ip, mp = self.pairs[idx]
         img_bgr = cv2.imread(str(ip), cv2.IMREAD_COLOR)
-        if img_bgr is None:
-            raise RuntimeError(f"Cannot read image: {ip}")
         img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
         img_lb  = letterbox_image_with_side_padding(img_rgb)
 
         mask = cv2.imread(str(mp), cv2.IMREAD_GRAYSCALE)
-        if mask is None:
-            raise RuntimeError(f"Cannot read mask: {mp}")
-        # ensure 0/255, resize to 512 (NEAREST) just in case
         mask = (mask > 127).astype(np.uint8) * 255
         if mask.shape[:2] != IMG_SIZE:
             mask = cv2.resize(mask, IMG_SIZE[::-1], interpolation=cv2.INTER_NEAREST)
 
         augmented = self.transform(image=img_lb)
-        x = augmented["image"]             # C×H×W
-        y = torch.from_numpy((mask/255.0).astype(np.float32)).unsqueeze(0)  # 1×H×W
-        return x, y, torch.tensor(1.0, dtype=torch.float32)  # weight 1.0 (not used, keeps signature)
+        x = augmented["image"]
+        y = torch.from_numpy((mask/255.0).astype(np.float32)).unsqueeze(0)
+        return x, y, torch.tensor(self.weight, dtype=torch.float32)
+
 
 # ---------------- MODEL/LOSS/METRICS ----------------
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -222,16 +226,43 @@ def sweep_best_threshold(model, loader, device, thresholds=None):
     return {"threshold": best[0], "dice": best[1], "iou": best[2]}
 
 # ---------------- DATALOADERS (hard-only split) ----------------
-def build_hard_loaders(val_frac=0.1):
-    ds = HardSegmDataset(HARD_IMG_ROOT, HARD_MASK_ROOT, transform=make_transform(train=True))
-    n = len(ds)
+from torch.utils.data import ConcatDataset
+
+def build_all_loaders(val_frac=0.1):
+    tf_train = make_transform(train=True)
+    tf_val   = make_transform(train=False)
+
+    # drei Quellen für den Gesamtdatensatz
+    hard_ds    = PairDataset(HARD_IMG_ROOT, HARD_MASK_ROOT, transform=None, weight=1.0)
+    clean_ds   = PairDataset(CLEANED_IMG_ROOT, CLEANED_MASKS_ROOT, transform=None, weight=1.0)
+    pseudo_ds  = PairDataset(PSEUDO_IMG_ROOT, PSEUDO_MASK_ROOT, transform=None, weight=0.5)
+
+    # alles zusammen
+    full_ds = ConcatDataset([hard_ds, clean_ds, pseudo_ds])
+
+    # zufällig in Train/Val splitten
+    n = len(full_ds)
     rng = np.random.RandomState(SEED)
     idx = rng.permutation(n)
     n_val = max(1, int(val_frac * n))
     val_idx = idx[:n_val].tolist()
     train_idx = idx[n_val:].tolist()
-    train_ds = Subset(ds, train_idx)
-    val_ds   = Subset(ds, val_idx)
+
+    # SubsetWrapper für unterschiedliche Transforms
+    class TransformingSubset(torch.utils.data.Subset):
+        def __init__(self, dataset, indices, transform):
+            super().__init__(dataset, indices)
+            self.transform = transform
+        def __getitem__(self, idx):
+            x, y, w = super().__getitem__(idx)
+            # wende hier transform an
+            augmented = self.transform(image=x.permute(1,2,0).numpy())  # zurück nach HWC
+            x_new = augmented["image"]
+            return x_new, y, w
+
+    train_ds = TransformingSubset(full_ds, train_idx, tf_train)
+    val_ds   = TransformingSubset(full_ds, val_idx, tf_val)
+
     train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True,
                               num_workers=NUM_WORKERS, pin_memory=(DEVICE.type=="cuda"))
     val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE, shuffle=False,
@@ -240,7 +271,7 @@ def build_hard_loaders(val_frac=0.1):
 
 # ---------------- FINETUNE ----------------
 def finetune_on_hard():
-    train_loader, val_loader = build_hard_loaders(val_frac=0.1)
+    train_loader, val_loader = build_all_loaders(val_frac=0.1)
 
     model = build_model()
     ckpt = torch.load(CKPT_IN, map_location=DEVICE)
@@ -267,12 +298,13 @@ def finetune_on_hard():
         model.train()
         pbar = tqdm(train_loader, desc=f"FT Epoch {epoch+1}/{EPOCHS} [Train]")
         total = 0.0
-        for x, y, _ in pbar:
-            x, y = x.to(DEVICE), y.to(DEVICE)
+        for x, y, w in pbar:
+            x, y, w = x.to(DEVICE), y.to(DEVICE), w.to(DEVICE)
             optimizer.zero_grad(set_to_none=True)
             with torch.cuda.amp.autocast(enabled=USE_AMP):
                 logits = model(x)
                 loss = criterion(logits, y)
+                loss = loss * w.mean()
             scaler.scale(loss).backward()
             scaler.step(optimizer); scaler.update()
             total += loss.item()
