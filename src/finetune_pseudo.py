@@ -233,9 +233,10 @@ def build_all_loaders(val_frac=0.1):
     tf_val   = make_transform(train=False)
 
     # drei Quellen für den Gesamtdatensatz
-    hard_ds    = PairDataset(HARD_IMG_ROOT, HARD_MASK_ROOT, transform=None, weight=1.0)
-    clean_ds   = PairDataset(CLEANED_IMG_ROOT, CLEANED_MASKS_ROOT, transform=None, weight=1.0)
-    pseudo_ds  = PairDataset(PSEUDO_IMG_ROOT, PSEUDO_MASK_ROOT, transform=None, weight=0.5)
+    hard_ds    = PairDataset(HARD_IMG_ROOT, HARD_MASK_ROOT, transform=tf_train, weight=1.0)
+    clean_ds   = PairDataset(CLEANED_IMG_ROOT, CLEANED_MASKS_ROOT, transform=tf_train, weight=1.0)
+    pseudo_ds  = PairDataset(PSEUDO_IMG_ROOT, PSEUDO_MASK_ROOT, transform=tf_train, weight=0.5)
+
 
     # alles zusammen
     full_ds = ConcatDataset([hard_ds, clean_ds, pseudo_ds])
