@@ -31,7 +31,7 @@ PSEUDO_MASK_ROOT  = Path("~/sarah/background_segmentation/dataset/pseudo_masks_2
 
 # output checkpoint
 CKPT_IN  = CHECKPOINT_PATH                                  
-CKPT_OUT = CHECKPOINT_PATH.with_name("224_finetuned_model_15.pth")
+CKPT_OUT = CHECKPOINT_PATH.with_name("224_no_val_finetuned_model_15.pth")
 
 # ---------------- TRAINING KNOBS ----------------
 IMG_SIZE = (224, 224)
