@@ -21,7 +21,7 @@ ENSEMBLE_WEIGHTS = [0.5, 0.25, 0.25]  # must match CHECKPOINTS length
 RELEVANT_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/gemuese_netz").expanduser()
 OUT_DIR = Path("~/sarah/background_segmentation/dataset/pseudo_masks_mixed_gemuse").expanduser()
 UNCERTAIN_DIR = OUT_DIR / "uncertain"
-OVERLAY_DIR = Path("/home/sarah/Documents/background_segmentation/preds_overlay_mixed")
+OVERLAY_DIR = Path("~/sarah/background_segmentation/preds_overlay_mixed").expanduser()
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 UNCERTAIN_DIR.mkdir(parents=True, exist_ok=True)
 OVERLAY_DIR.mkdir(parents=True, exist_ok=True)
