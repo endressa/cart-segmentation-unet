@@ -27,11 +27,11 @@ CLEANED_IMG_ROOT = Path("~/sarah/background_segmentation/dataset/images_cleaned"
 CLEANED_MASKS_ROOT = Path("~/sarah/background_segmentation/dataset/final_masks_cleaned").expanduser()
 
 PSEUDO_IMG_ROOT   = Path("~/sarah/background_segmentation/dataset/images_pseudo_224").expanduser()
-PSEUDO_MASK_ROOT  = Path("~/sarah/background_segmentation/dataset/pseudo_masks_224").expanduser()
+PSEUDO_MASK_ROOT  = Path("~/sarah/background_segmentation/dataset/pseudo_masks_224_cleaned").expanduser()
 
 # output checkpoint
 CKPT_IN  = CHECKPOINT_PATH                                  
-CKPT_OUT = CHECKPOINT_PATH.with_name("224_no_val_finetuned_model_15.pth")
+CKPT_OUT = CHECKPOINT_PATH.with_name("cleaned_224_no_val_finetuned_model_15.pth")
 
 # ---------------- TRAINING KNOBS ----------------
 IMG_SIZE = (224, 224)
