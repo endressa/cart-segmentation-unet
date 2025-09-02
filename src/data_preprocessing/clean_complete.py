@@ -13,8 +13,8 @@ from tqdm import tqdm
 
 #  gemuese_netz
 # ----------------------- HARD CODED CONFIG -----------------------
-IMAGES_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/gemuese_netz").expanduser()
-MASKS_ROOT  = Path("/sarah/background_segmentation/dataset/pseudo_masks_mixed_gemuse").expanduser()
+IMAGES_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/merci").expanduser()
+MASKS_ROOT  = Path("/sarah/background_segmentation/dataset/pseudo_masks_mixed_merci").expanduser()
 OUT_ROOT    = Path("/sarah/background_segmentation/dataset/mixed_pseudo_clean").expanduser()
 
 SIDE_PADDING_RATIO = 0.1   # horizontal padding fraction
