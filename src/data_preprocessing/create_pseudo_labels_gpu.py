@@ -18,8 +18,8 @@ CHECKPOINTS = [
 ]
 ENSEMBLE_WEIGHTS = [0.5, 0.25, 0.25]  # must match CHECKPOINTS length
 
-RELEVANT_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/merci").expanduser()
-OUT_DIR = Path("~/sarah/background_segmentation/dataset/pseudo_masks_mixed_merci").expanduser()
+RELEVANT_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/head_and_shoulders_sub_sarah").expanduser()
+OUT_DIR = Path("~/sarah/background_segmentation/dataset/pseudo_masks_head_and shoulders").expanduser()
 UNCERTAIN_DIR = OUT_DIR / "uncertain"
 OVERLAY_DIR = Path("~/sarah/background_segmentation/preds_overlay_mixed").expanduser()
 OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -107,14 +107,14 @@ transform = A.Compose([
     ToTensorV2(),
 ])
 
-def clean_mask(pred01, min_area=1000):
-    pred01 = (pred01.astype(np.uint8) > 0).astype(np.uint8)
-    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(pred01, connectivity=8)
-    cleaned = np.zeros_like(pred01)
-    for i in range(1, num_labels):
-        if stats[i, cv2.CC_STAT_AREA] >= min_area:
-            cleaned[labels == i] = 1
-    return cleaned
+# def clean_mask(pred01, min_area=1000):
+#     pred01 = (pred01.astype(np.uint8) > 0).astype(np.uint8)
+#     num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(pred01, connectivity=8)
+#     cleaned = np.zeros_like(pred01)
+#     for i in range(1, num_labels):
+#         if stats[i, cv2.CC_STAT_AREA] >= min_area:
+#             cleaned[labels == i] = 1
+#     return cleaned
 
 def entropy_map(p, eps=1e-6):
     p = np.clip(p, eps, 1-eps)
@@ -284,7 +284,7 @@ if __name__ == "__main__":
             # Threshold + cleanup
             pred01 = (probs >= THRESHOLD).astype(np.uint8)
             min_area = int(IMG_SIZE[0] * IMG_SIZE[1] * 0.001)
-            pred01 = clean_mask(pred01, min_area=min_area)
+            # pred01 = clean_mask(pred01, min_area=min_area)
 
             # QC metrics
             fg_area  = float(pred01.mean())
