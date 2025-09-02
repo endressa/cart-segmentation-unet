@@ -11,10 +11,11 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 
+#  gemuese_netz
 # ----------------------- HARD CODED CONFIG -----------------------
 IMAGES_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/merci").expanduser()
-MASKS_ROOT  = Path("/sarah/background_segmentation/dataset/pseudo_masks_mixed_merci")
-OUT_ROOT    = Path("/home/sarah/Documents/background_segmentation/dataset/mixed_pseudo_clean")
+MASKS_ROOT  = Path("/sarah/background_segmentation/dataset/pseudo_masks_mixed_merci").expanduser()
+OUT_ROOT    = Path("/home/sarah/Documents/background_segmentation/dataset/mixed_pseudo_clean").expanduser()
 
 SIDE_PADDING_RATIO = 0.1   # horizontal padding fraction
 OPEN_KS  = 3               # morph open kernel size
