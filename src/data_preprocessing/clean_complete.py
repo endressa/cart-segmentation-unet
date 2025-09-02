@@ -13,13 +13,13 @@ from tqdm import tqdm
 
 #  gemuese_netz
 # ----------------------- HARD CODED CONFIG -----------------------
-IMAGES_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/gemuese_netz").expanduser()
-MASKS_ROOT  = Path("~/sarah/background_segmentation/dataset/pseudo_masks_mixed_gemuse").expanduser()
+IMAGES_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/head_and_shoulders_sub_sarah").expanduser()
+MASKS_ROOT  = Path("~/sarah/background_segmentation/dataset/pseudo_masks_head_and shoulders").expanduser()
 OUT_ROOT    = Path("~/sarah/background_segmentation/dataset/mixed_pseudo_clean").expanduser()
 
-# IMAGES_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/pseudo_masks_224")
-# MASKS_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/images_pseudo_224")
-# OUT_ROOT    = Path("/home/sarah/Documents/background_segmentation/dataset/test_pseudo_masks_224")
+# IMAGES_ROOT = Path("/home/sarah/Documents/background_segmentation/head_and_shoulders_sarah/head_and_shoulders_sub_sarah")
+# MASKS_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/pseudo_masks_15/head_and_shoulders_sub_sarah")
+# OUT_ROOT    = Path("/home/sarah/Documents/background_segmentation/dataset/pseudo_masks_head_and shoulders_cleaned")
 
 SIDE_PADDING_RATIO = 0.1   # horizontal padding fraction
 OPEN_KS  = 3               # morph open kernel size
