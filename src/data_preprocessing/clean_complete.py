@@ -12,9 +12,9 @@ import numpy as np
 from tqdm import tqdm
 
 # ----------------------- HARD CODED CONFIG -----------------------
-IMAGES_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/images_pseudo_224")
-MASKS_ROOT  = Path("/home/sarah/Documents/background_segmentation/dataset/pseudo_masks_224")
-OUT_ROOT    = Path("/home/sarah/Documents/background_segmentation/dataset/test_pseudo_masks_224")
+IMAGES_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/merci").expanduser()
+MASKS_ROOT  = Path("/sarah/background_segmentation/dataset/pseudo_masks_mixed_merci")
+OUT_ROOT    = Path("/home/sarah/Documents/background_segmentation/dataset/mixed_pseudo_clean")
 
 SIDE_PADDING_RATIO = 0.1   # horizontal padding fraction
 OPEN_KS  = 3               # morph open kernel size
