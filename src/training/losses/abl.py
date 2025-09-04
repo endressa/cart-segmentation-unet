@@ -42,7 +42,7 @@ class ABL(nn.Module):
         self.dist_map_transform = transforms.Compose([
             lambda img: img.unsqueeze(0),
             lambda nd: nd.type(torch.int64),
-            partial(class2one_hot, C=1),
+            partial(class2one_hot, C=2),
             itemgetter(0),
             lambda t: t.cpu().numpy(),
             one_hot2dist,
@@ -171,6 +171,8 @@ class ABL(nn.Module):
         return out
 
     def forward(self, logits, target):
+        print("Logits stats:", logits.min().item(), logits.max().item())
+
         if target.ndim == 4 and target.size(1) == 1:
             target = target[:,0,...]
         target = target.long()
@@ -187,6 +189,7 @@ class ABL(nn.Module):
         dist_maps = self.get_dist_maps(gt_boundary).cuda() # <-- it will slow down the training, you can put it to dataloader.
 
         pred_boundary = self.logits2boundary(logits)
+        print("Pred boundary sum:", pred_boundary.sum().item())
         if pred_boundary.sum() < 1: # avoid nan
             return None # you should check in the outside. if None, skip this loss.
         
