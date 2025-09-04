@@ -183,6 +183,14 @@ class ABL(nn.Module):
         if ph != h or pw != w:
             logits = F.interpolate(input=logits, size=(
                 h, w), mode='bilinear', align_corners=True)
+            
+        # --- Binary vs Multi-Class handling ---
+        if logits.shape[1] == 1:
+            probs_fg = torch.sigmoid(logits)
+            probs_bg = 1.0 - probs_fg
+            logits = torch.cat([probs_bg, probs_fg], dim=1)
+        else:
+            logits = torch.softmax(logits, dim=1)
 
         gt_boundary = self.gt2boundary(target, ignore_label=self.ignore_label)
 
