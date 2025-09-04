@@ -7,7 +7,7 @@ Train on all cleaned pseudo-labels with a session-aware split.
 - Masks live in a single merged root with identical subfolder structure
 - Session-aware split: ensures train/val don't share near-duplicate frames from the same session
 """
-from training.losses.abl import ActiveBoundaryLoss
+from losses.abl import ActiveBoundaryLoss
 import json
 import os
 import random
