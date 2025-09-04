@@ -265,19 +265,42 @@ class BCEDiceABL(nn.Module):
     def __init__(self, bce_weight=0.5, smooth=1.0, abl_weight=0.1):
         super().__init__()
         self.region_loss = BCEDiceLoss(bce_weight=bce_weight, smooth=smooth)
-        self.boundary_loss = ABL()  # binary segmentation
+        self.boundary_loss = ABL()
         self.abl_weight = abl_weight
+
+        self.boundary_none_count = 0
+        self.total_calls = 0
 
 
     def components(self, logits, targets):
-        """Return dict with separate loss parts + total (no detach on total)."""
         region = self.region_loss(logits, targets)
         boundary = self.boundary_loss(logits, targets)
-        total = region + self.abl_weight * boundary
-        return {"total": total, "region": region.detach(), "boundary": boundary.detach()}
+
+        self.total_calls += 1
+
+        if boundary is None:  # skip if ABL couldn't compute a valid boundary
+            self.boundary_none_count += 1
+            total = region
+            boundary_val = torch.tensor(0.0, device=logits.device)
+        else:
+            total = region + self.abl_weight * boundary
+            boundary_val = boundary.detach()
+
+        # Alle 500 Calls Debug-Ausgabe
+        if self.total_calls % 500 == 0:
+            ratio = self.boundary_none_count / self.total_calls
+            print(f"[ABL Debug] boundary=None {self.boundary_none_count}/{self.total_calls} "
+                  f"({ratio:.1%})")
+            
+        return {
+            "total": total,
+            "region": region.detach(),
+            "boundary": boundary_val
+        }
 
     def forward(self, logits, targets):
         return self.components(logits, targets)["total"]
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Build loaders with session-aware split
