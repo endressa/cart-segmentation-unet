@@ -265,7 +265,7 @@ class BCEDiceABL(nn.Module):
     def __init__(self, bce_weight=0.5, smooth=1.0, abl_weight=0.1):
         super().__init__()
         self.region_loss = BCEDiceLoss(bce_weight=bce_weight, smooth=smooth)
-        self.boundary_loss = ABL(num_classes=1)  # binary segmentation
+        self.boundary_loss = ABL()  # binary segmentation
         self.abl_weight = abl_weight
 
 
