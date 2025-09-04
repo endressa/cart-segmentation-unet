@@ -35,7 +35,7 @@ INIT_CKPT = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretra
 OUT_CKPT  = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/pseudo_finetuned_clean_hard_70epochs.pth")
 
 IMG_SIZE = (512, 512)
-LETTERBOX = False
+LETTERBOX = True
 SIDE_PADDING_RATIO = 0.1
 
 EPOCHS = 70
