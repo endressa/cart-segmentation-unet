@@ -13,9 +13,9 @@ from tqdm import tqdm
 
 #  gemuese_netz
 # ----------------------- HARD CODED CONFIG -----------------------
-IMAGES_ROOT = Path("/home/ansible/sarah/background_segmentation/dataset/images_cleaned").expanduser()
-MASKS_ROOT  = Path("/home/ansible/sarah/background_segmentation/dataset/final_masks_cleaned").expanduser()
-OUT_ROOT    = Path("~/sarah/background_segmentation/dataset/final_masks_cleaned").expanduser()
+IMAGES_ROOT = Path("/home/ansible/sarah/background_segmentation/dataset/images_hard").expanduser()
+MASKS_ROOT  = Path("/home/ansible/sarah/background_segmentation/dataset/masks_hard").expanduser()
+OUT_ROOT    = Path("~/sarah/background_segmentation/dataset/masks_hard").expanduser()
 
 # IMAGES_ROOT = Path("/home/sarah/Documents/background_segmentation/head_and_shoulders_sarah/head_and_shoulders_sub_sarah")
 # MASKS_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/pseudo_masks_15/head_and_shoulders_sub_sarah")
