@@ -420,7 +420,11 @@ def train():
             tr_tot += float(loss.item())
             tr_reg += float(comps["region"].item())
             tr_bnd += float(comps["boundary"].item())
-            pbar.set_postfix({"loss": f"{loss.item():.4f}"})
+            pbar.set_postfix({
+                "total": f"{comps['total'].item():.4f}",
+                "region": f"{comps['region'].item():.4f}",
+                "boundary": f"{comps['boundary'].item():.4f}"
+            })
 
         # ---- VAL ----
         model.eval()
