@@ -32,18 +32,18 @@ HARD_IMAGES  = Path("/home/ansible/sarah/background_segmentation/dataset/images_
 HARD_MASKS   = Path("/home/ansible/sarah/background_segmentation/dataset/masks_hard")
 
 INIT_CKPT = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/pseudo_model_all.pth")
-OUT_CKPT  = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/pseudo_finetuned_clean_hard.pth")
+OUT_CKPT  = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/pseudo_finetuned_clean_hard_70epochs.pth")
 
 IMG_SIZE = (512, 512)
 LETTERBOX = False
 SIDE_PADDING_RATIO = 0.1
 
-EPOCHS = 20
+EPOCHS = 70
 BATCH_SIZE = 6
 LR = 3e-5                # kleiner als beim Pretrain
 ENCODER_LR_MULT = 0.3    # Encoder noch kleiner
 WEIGHT_DECAY = 1e-4
-PATIENCE = 8
+PATIENCE = 7
 VAL_FRACTION = 0.1
 SEED = 1337
 
