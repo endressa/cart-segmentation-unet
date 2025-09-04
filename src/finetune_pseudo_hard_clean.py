@@ -24,6 +24,8 @@ from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import segmentation_models_pytorch as smp
+import json
+
 
 # ───────────────────────────── CONFIG ─────────────────────────────
 CLEAN_IMAGES = Path("/home/ansible/sarah/background_segmentation/dataset/images_cleaned")
@@ -33,7 +35,7 @@ HARD_MASKS   = Path("/home/ansible/sarah/background_segmentation/dataset/masks_h
 
 INIT_CKPT = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/pseudo_model_all.pth")
 OUT_CKPT  = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/pseudo_all_model_finetuned_clean.pth")
-
+METRICS_FILE = OUT_CKPT.with_suffix(".metrics.json")
 IMG_SIZE = (512, 512)
 LETTERBOX = True
 SIDE_PADDING_RATIO = 0.1
@@ -204,35 +206,61 @@ def train():
     ], weight_decay=WEIGHT_DECAY)
     scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
 
+    history = {"train_loss": [], "val_loss": [], "val_dice": []}
     best_val, epochs_no_improve = -1.0, 0
+
     for epoch in range(EPOCHS):
-        model.train(); run_loss=0
+        model.train(); run_loss = 0.0
         pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{EPOCHS}")
-        for data,target in pbar:
-            data,target=data.to(device),target.to(device)
+        for data, target in pbar:
+            data, target = data.to(device), target.to(device)
             opt.zero_grad(set_to_none=True)
             with torch.cuda.amp.autocast(enabled=use_amp):
-                logits=model(data); loss=criterion(logits,target)
+                logits = model(data)
+                loss = criterion(logits, target)
             scaler.scale(loss).backward(); scaler.step(opt); scaler.update()
-            run_loss+=loss.item(); pbar.set_postfix({"loss":f"{loss.item():.4f}"})
-        # val
-        model.eval(); vloss=0; vdice=[]
+            run_loss += loss.item()
+            pbar.set_postfix({"loss": f"{loss.item():.4f}"})
+
+        avg_train_loss = run_loss / len(train_loader)
+
+        # ── validation
+        model.eval(); vloss = 0.0; vdice = []
         with torch.no_grad():
-            for data,target in val_loader:
-                data,target=data.to(device),target.to(device)
-                logits=model(data); vloss+=criterion(logits,target).item()
-                vdice.append(dice_metric(logits,target))
-        avg_dice=sum(vdice)/len(vdice)
+            for data, target in val_loader:
+                data, target = data.to(device), target.to(device)
+                logits = model(data)
+                vloss += criterion(logits, target).item()
+                vdice.append(dice_metric(logits, target))
+
+        avg_val_loss = vloss / len(val_loader)
+        avg_dice     = sum(vdice) / len(vdice)
+
+        # ── record + persist metrics every epoch
+        history["train_loss"].append(avg_train_loss)
+        history["val_loss"].append(avg_val_loss)
+        history["val_dice"].append(avg_dice)
+        with open(METRICS_FILE, "w") as f:
+            json.dump(history, f, indent=2)
+
+        # ── logging + checkpoint/early stop
         print(f"Epoch {epoch+1}: val dice {avg_dice:.4f}")
-        if avg_dice>best_val:
-            best_val=avg_dice; epochs_no_improve=0
-            torch.save({"epoch":epoch+1,"model_state_dict":model.state_dict(),"val_dice":best_val},OUT_CKPT)
+        if avg_dice > best_val:
+            best_val = avg_dice
+            epochs_no_improve = 0
+            torch.save(
+                {"epoch": epoch+1, "model_state_dict": model.state_dict(), "val_dice": best_val},
+                OUT_CKPT
+            )
             print(f" ✔ Neues bestes Modell → {OUT_CKPT}")
         else:
-            epochs_no_improve+=1
-            if epochs_no_improve>=PATIENCE:
-                print("Early stopping."); break
+            epochs_no_improve += 1
+            if epochs_no_improve >= PATIENCE:
+                print("Early stopping.")
+                break
+
     print(f"Best Val Dice: {best_val:.4f}")
+
 
 if __name__=="__main__":
     train()
