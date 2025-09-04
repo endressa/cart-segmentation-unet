@@ -171,6 +171,9 @@ class ABL(nn.Module):
         return out
 
     def forward(self, logits, target):
+        if target.ndim == 4 and target.size(1) == 1:
+            target = target[:,0,...]
+        target = target.long()
         eps = 1e-10
         ph, pw = logits.size(2), logits.size(3)
         h, w = target.size(1), target.size(2)
