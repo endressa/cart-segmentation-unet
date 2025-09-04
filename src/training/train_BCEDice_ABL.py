@@ -7,7 +7,7 @@ Train on all cleaned pseudo-labels with a session-aware split.
 - Masks live in a single merged root with identical subfolder structure
 - Session-aware split: ensures train/val don't share near-duplicate frames from the same session
 """
-from losses.abl import ActiveBoundaryLoss
+from losses.abl import ABL
 import json
 import os
 import random
@@ -265,7 +265,7 @@ class BCEDiceABL(nn.Module):
     def __init__(self, bce_weight=0.5, smooth=1.0, abl_weight=0.1):
         super().__init__()
         self.region_loss = BCEDiceLoss(bce_weight=bce_weight, smooth=smooth)
-        self.boundary_loss = ActiveBoundaryLoss(num_classes=1)  # binary segmentation
+        self.boundary_loss = ABL(num_classes=1)  # binary segmentation
         self.abl_weight = abl_weight
 
 
