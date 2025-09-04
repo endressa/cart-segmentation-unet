@@ -32,7 +32,7 @@ HARD_IMAGES  = Path("/home/ansible/sarah/background_segmentation/dataset/images_
 HARD_MASKS   = Path("/home/ansible/sarah/background_segmentation/dataset/masks_hard")
 
 INIT_CKPT = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/pseudo_model_all.pth")
-OUT_CKPT  = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/pseudo_finetuned_clean_hard_70epochs.pth")
+OUT_CKPT  = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/pseudo_all_model_finetuned_clean.pth")
 
 IMG_SIZE = (512, 512)
 LETTERBOX = True
