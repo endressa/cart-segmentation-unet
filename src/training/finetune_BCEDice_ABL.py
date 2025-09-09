@@ -49,7 +49,7 @@ HARD_IMAGES  = Path("/home/ansible/sarah/background_segmentation/dataset/images_
 HARD_MASKS   = Path("/home/ansible/sarah/background_segmentation/dataset/masks_hard")
 
 INIT_CKPT = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/BCEDiceABL_pseudo.pth")
-OUT_CKPT  = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/finetuned_BCEDiceABL_pseudo.pth")
+OUT_CKPT  = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/finetuned_BCEDiceABL_pseudo_8e.pth")
 METRICS_FILE = OUT_CKPT.with_suffix(".metrics.json")
 OUT_CKPT.parent.mkdir(parents=True, exist_ok=True)
 
