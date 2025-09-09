@@ -59,7 +59,7 @@ OUT_CKPT.parent.mkdir(parents=True, exist_ok=True)
 IMG_SIZE: Tuple[int, int] = (512, 512)
 SIDE_PADDING_RATIO = 0.10  # must match your preprocessing during training/inference
 BATCH_SIZE = 6
-EPOCHS = 60
+EPOCHS = 8
 LR = 1e-4
 WEIGHT_DECAY = 1e-4
 PATIENCE = 8  # early stopping on val dice
