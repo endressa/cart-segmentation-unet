@@ -49,7 +49,7 @@ HARD_IMAGES  = Path("/home/ansible/sarah/background_segmentation/dataset/images_
 HARD_MASKS   = Path("/home/ansible/sarah/background_segmentation/dataset/masks_hard")
 
 INIT_CKPT = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/BCEDiceABL_pseudo.pth")
-OUT_CKPT  = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/finetuned_BCEDiceABL_pseudo_8e.pth")
+OUT_CKPT  = Path("/home/ansible/sarah/background_segmentation/checkpoints_pretrained/finetuned_BCEDiceABL_pseudo_early_stop.pth")
 METRICS_FILE = OUT_CKPT.with_suffix(".metrics.json")
 OUT_CKPT.parent.mkdir(parents=True, exist_ok=True)
 
@@ -368,7 +368,7 @@ def train():
     ], weight_decay=WEIGHT_DECAY)
 
     scaler = torch.cuda.amp.GradScaler(enabled=USE_AMP)
-    best_val_dice = -1.0
+    best_val_loss = float("inf")
     epochs_no_improve = 0
 
     history = {"epochs": []}
@@ -455,18 +455,27 @@ def train():
         history["epochs"].append(epoch_rec)
         METRICS_FILE.write_text(json.dumps(history, indent=2))
 
-        # checkpoint
-        if avg_dice > best_val_dice:
-            best_val_dice = avg_dice
+        # checkpoint on validation loss (lower is better)
+        current = avg_val_total  # or avg_val_region if you prefer just region; your call
+        if current < (best_val_loss):
+            best_val_loss = current
             epochs_no_improve = 0
-            save_best(model, epoch, best_val_dice)
+            # Save and also record the loss in the checkpoint for traceability
+            torch.save({
+                "epoch": epoch,
+                "model_state_dict": model.state_dict(),
+                "val_total_loss": best_val_loss,
+                "val_dice": avg_dice,  # keep for info
+            }, OUT_CKPT)
+            print(f"  ✔ Saved new best model to {OUT_CKPT} (Val loss {best_val_loss:.6f})")
         else:
             epochs_no_improve += 1
             if epochs_no_improve >= PATIENCE:
-                print(f"Early stopping at epoch {epoch} (no Val Dice improvement).")
+                print(f"Early stopping at epoch {epoch} (no Val loss improvement).")
                 break
 
-    print(f"Best Val Dice: {best_val_dice:.4f}")
+
+    print(f"Best Val loss: {best_val_loss:.6f}")
     return OUT_CKPT
 
 # ────────────────────────────────────────────────────────────────────────────────
