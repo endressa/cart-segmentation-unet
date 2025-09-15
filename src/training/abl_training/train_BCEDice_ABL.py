@@ -33,10 +33,12 @@ IMAGE_ROOTS = [
     Path("/opt/whizcart/shared/carrefour_classes/images/merci"),
     Path("/opt/whizcart/shared/carrefour_classes/images/gemuese_netz"),
     Path("/opt/whizcart/shared/carrefour_classes/images/head_and_shoulders_sub_sarah"),
-]
-MASKS_ROOT = Path("/home/ansible/sarah/background_segmentation/dataset/mixed_pseudo_clean")
+    Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah"),
 
-CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/BCEDiceABL_pseudo.pth").expanduser()
+]
+MASKS_ROOT = Path("/home/ansible/sarah/background_segmentation/dataset/mixed_pseudo_clean_unlettered")
+
+CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/BCEDiceABL_pseudo_unlettered.pth").expanduser()
 CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
 METRICS_JSON = CHECKPOINT_PATH.with_suffix(".metrics.json")
 
@@ -80,50 +82,22 @@ USE_AMP = DEVICE.type == "cuda"
 # ────────────────────────────────────────────────────────────────────────────────
 # Preprocessing: letterbox with side padding (matches your predictor)
 # ────────────────────────────────────────────────────────────────────────────────
-def letterbox_image_with_side_padding(image, padding_color=(0, 0, 0), side_padding_ratio=SIDE_PADDING_RATIO):
+def letterbox_image(image, padding_color=(0, 0, 0)):
     """
-    Applies letterboxing to an image by:
-    - Adding a specified % of horizontal padding (left & right),
-    - Making the result square without resizing the original content.
-
-    Parameters:
-    - image (numpy.ndarray): The input image.
-    - padding_color (tuple): Color of the padding as (B, G, R).
-    - side_padding_ratio (float): Ratio of width to use as side padding (default 0.1 = 10%).
-
-    Returns:
-    - letterboxed_image (numpy.ndarray): The letterboxed image.
+    Standard square letterboxing (no side padding).
+    Rescales the shorter side and pads to make the image square.
     """
     image_np = np.array(image)
-    orig_height, orig_width = image_np.shape[:2]
-    
-    # print(f"Original Image Size: {orig_width}x{orig_height}")  # Before letterboxing
+    h, w = image_np.shape[:2]
+    max_dim = max(w, h)
 
-    # Calculate horizontal padding
-    side_padding = round(orig_width * side_padding_ratio)
-    padded_width = orig_width + 2 * side_padding
-    padded_height = orig_height
+    # create square canvas
+    result = np.full((max_dim, max_dim, 3), padding_color, dtype=np.uint8)
+    x_offset = (max_dim - w) // 2
+    y_offset = (max_dim - h) // 2
+    result[y_offset:y_offset+h, x_offset:x_offset+w] = image_np
+    return result
 
-    # print(f"Image after adding side padding: {padded_width}x{padded_height}")  # After side padding
-
-    # Create new canvas with horizontal padding
-    padded_image = np.full((padded_height, padded_width, 3), padding_color, dtype=np.uint8)
-    padded_image[:, side_padding:side_padding+orig_width] = image
-
-    # Now make it square by adding vertical padding if needed
-    max_dim = max(padded_width, padded_height)
-    letterboxed_image = np.full((max_dim, max_dim, 3), padding_color, dtype=np.uint8)
-
-    # print(f"Image after letterboxing (square): {max_dim}x{max_dim}")  # After making square
-    
-    # Compute top-left corner to place padded image
-    x_offset = (max_dim - padded_width) // 2
-    y_offset = (max_dim - padded_height) // 2
-
-    # Place padded image onto the final square canvas
-    letterboxed_image[y_offset:y_offset+padded_height, x_offset:x_offset+padded_width] = padded_image
-
-    return letterboxed_image
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Session key extraction
@@ -207,7 +181,7 @@ class PseudoSegmDataset(Dataset):
             raise RuntimeError(f"Could not read mask: {rec['mask']}")
 
         # reproduce predictor preprocessing on image (not on mask)
-        img = letterbox_image_with_side_padding(img)
+        img = letterbox_image(img)
         img = cv2.resize(img, IMG_SIZE, interpolation=cv2.INTER_LINEAR)
         mask = cv2.resize(mask, IMG_SIZE, interpolation=cv2.INTER_NEAREST)
 
@@ -380,6 +354,7 @@ def train():
     scaler = torch.cuda.amp.GradScaler(enabled=USE_AMP)
     best_val_dice = -1.0
     epochs_no_improve = 0
+    best_val_loss = float("inf")
 
     history = {"epochs": []}
     if METRICS_JSON.exists():
@@ -428,6 +403,7 @@ def train():
 
         # ---- VAL ----
         model.eval()
+        val_loss_sum = 0.0
         va_tot = va_reg = va_bnd = 0.0
         val_dice_vals = []
         with torch.no_grad():
@@ -435,6 +411,7 @@ def train():
                 imgs, masks = imgs.to(DEVICE), masks.to(DEVICE)
                 logits = model(imgs)
                 comps = criterion.components(logits=logits, targets=masks)
+                val_loss_sum += float(comps["total"].item())
                 va_tot += float(comps["total"].item())
                 va_reg += float(comps["region"].item())
                 va_bnd += float(comps["boundary"].item())
@@ -448,6 +425,7 @@ def train():
         avg_val_region = va_reg / nva
         avg_val_boundary = va_bnd / nva
         avg_dice = sum(val_dice_vals) / max(1, len(val_dice_vals))
+        avg_val_loss = val_loss_sum / len(val_loader)
         # current lr (take first group)
         lr_now = opt.param_groups[0]["lr"]
 
@@ -469,19 +447,20 @@ def train():
         METRICS_JSON.write_text(json.dumps(history, indent=2))
 
         # checkpoint
-        if avg_dice > best_val_dice:
-            best_val_dice = avg_dice
+        if avg_val_loss < best_val_loss:
+            best_val_loss = avg_val_loss
             epochs_no_improve = 0
             torch.save({
                 "epoch": epoch + 1,
                 "model_state_dict": model.state_dict(),
-                "val_dice": avg_dice
+                "val_dice": avg_dice,
+                "loss": best_val_loss,
             }, CHECKPOINT_PATH)
             print(f"  ✔ Saved new best model (Dice {avg_dice:.4f})")
         else:
             epochs_no_improve += 1
             if epochs_no_improve >= PATIENCE:
-                print(f"Early stopping at epoch {epoch+1} (no Val Dice improvement).")
+                print(f"Early stopping at epoch {epoch+1} (no Val Loss improvement).")
                 break
 
     print(f"Best Val Dice: {best_val_dice:.4f}")
