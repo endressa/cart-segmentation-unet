@@ -358,21 +358,15 @@ def visualize_examples_to_files(
     return saved
 
 def collect_pairs_from_roots(
-    IMAGES_ROOT,
+    img_root,
     MASKS_ROOT,
     OUTPUT_ROOT,
     image_exts=(".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"),
     mask_exts=(".png", ".jpg", ".jpeg"),
-    require_cleaned=True,   # only return pairs if cleaned mask exists
+    require_cleaned=True,
 ):
-    """
-    Find (image, orig_mask, cleaned_mask) triples by mirroring the relative path of each image
-    from IMAGES_ROOT into MASKS_ROOT/OUTPUT_ROOT and swapping the suffix to a mask extension.
-    """
-    IMAGES_ROOT, MASKS_ROOT, OUTPUT_ROOT = map(Path, (IMAGES_ROOT, MASKS_ROOT, OUTPUT_ROOT))
     pairs = []
 
-    # helper: first existing path among candidate suffixes
     def first_existing(base_path, exts):
         for ext in exts:
             p = base_path.with_suffix(ext)
@@ -380,25 +374,22 @@ def collect_pairs_from_roots(
                 return p
         return None
 
-    img_paths = [p for p in IMAGES_ROOT.rglob("*") if p.suffix.lower() in image_exts]
+    img_paths = [p for p in img_root.rglob("*") if p.suffix.lower() in image_exts]
 
     for img_file in img_paths:
         rel = img_file.relative_to(img_root)
-        out_path = (OUTPUT_ROOT / rel).with_suffix(".png")
-
-        # look for original & cleaned masks with any allowed mask suffix
-        orig_mask    = first_existing(MASKS_ROOT  / rel, mask_exts)
+        orig_mask    = first_existing(MASKS_ROOT / rel, mask_exts)
         cleaned_mask = first_existing(OUTPUT_ROOT / rel, mask_exts)
 
         if orig_mask is None:
-            continue  # no original mask -> skip
-
+            continue
         if require_cleaned and cleaned_mask is None:
-            continue  # only return pairs when cleaned exists
+            continue
 
         pairs.append((img_file, orig_mask, cleaned_mask))
 
     return pairs
+
 
 if __name__ == "__main__":
     IMAGE_ROOTS = [
@@ -410,10 +401,10 @@ if __name__ == "__main__":
 
     # IMAGE_ROOTS = [Path("/home/sarah/Documents/background_segmentation/dataset/images_hard")
                 #    ]
-    MASKS_ROOT = Path("/home/sarah/background_segmentation/dataset/mixed_pseudo_clean")
+    MASKS_ROOT = Path("~/sarah/background_segmentation/dataset/mixed_pseudo_clean").expanduser()
 
     # MASKS_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/masks_hard")
-    OUTPUT_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/mixed_pseudo_clean_unlettered")
+    OUTPUT_ROOT = Path("~/sarah/background_segmentation/dataset/mixed_pseudo_clean_unlettered").expanduser()
 
     all_pairs = []
     for img_root in IMAGE_ROOTS:
