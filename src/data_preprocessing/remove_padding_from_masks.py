@@ -9,9 +9,17 @@ from PIL import Image
 SIDE_PADDING_RATIO = 0.1
 
     # Paths
-IMAGES_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/images_pseudo")
-MASKS_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/pseudo_masks")
-OUTPUT_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/pseudo_masks_cleaned")
+# IMAGES_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/images_pseudo")
+
+IMAGE_ROOTS = [
+    Path("/opt/whizcart/shared/carrefour_classes/images/merci_raw"),
+    Path("/opt/whizcart/shared/carrefour_classes/images/gemuese_netz/raw"),
+    Path("/opt/whizcart/shared/carrefour_classes/images/head_and_shoulders_sub_sarah/raw"),
+    Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah/raw"),
+]
+
+MASKS_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/mixed_pseudo_clean")
+OUTPUT_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/mixed_pseudo_clean_unlettered")
 
 OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
 
@@ -44,16 +52,21 @@ def calculate_content_boundaries(orig_w, orig_h, final_w, final_h, side_padding_
     return X0, Y0, X1, Y1
 
 def cut_mask_padding(mask, orig_w, orig_h, side_padding_ratio=SIDE_PADDING_RATIO):
-    # Absicherung, falls Maske nicht exakt quadratisch ist
+    """
+    Remove padding completely and return a mask cropped
+    to the original image size (orig_h × orig_w).
+    """
     H, W = mask.shape[:2]
-    x0,y0,x1,y1 = calculate_content_boundaries(orig_w, orig_h, W, H, side_padding_ratio)
+    x0, y0, x1, y1 = calculate_content_boundaries(orig_w, orig_h, W, H, side_padding_ratio)
 
-    content_mask = np.zeros((H, W), dtype=np.uint8)
-    if x1 > x0 and y1 > y0:
-        content_mask[y0:y1, x0:x1] = 255
+    # Crop to the content region
+    cropped = mask[y0:y1, x0:x1]
 
-    cleaned = cv2.bitwise_and(mask, content_mask)
-    return cleaned
+    # Resize to exactly match original dimensions (safety, in case of rounding)
+    cropped_resized = cv2.resize(cropped, (orig_w, orig_h), interpolation=cv2.INTER_NEAREST)
+
+    return cropped_resized
+
 
 def get_original_dimensions_cv2(image_path):
     img = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
@@ -124,74 +137,6 @@ def post_clean(binary_mask, min_area=1500, open_ks=5, close_ks=9,
     return m
 
 
-
-def process_masks():
-    """
-    Läuft rekursiv über alle Bilder unter IMAGES_ROOT
-    und schreibt die bereinigten Masken 1:1 in OUTPUT_ROOT (gleiche Struktur),
-    gibt die Liste der Tripel (img, orig_mask, cleaned_mask) zurück.
-    """
-    exts = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
-    processed = skipped = errors = 0
-    processed_pairs = []
-
-    if not IMAGES_ROOT.exists():
-        print(f"❌ IMAGES_ROOT existiert nicht: {IMAGES_ROOT}")
-        return []
-
-    print("🔍 Scanne rekursiv nach Bild/Masken-Paaren...")
-    img_paths = [p for p in IMAGES_ROOT.rglob("*") if p.suffix.lower() in exts]
-
-    print(f"   Gefundene Bilder: {len(img_paths)} (unter {IMAGES_ROOT})")
-    for img_file in tqdm(img_paths, desc="Processing images"):
-        try:
-            # gleiche Relativstruktur auch für Masken/Output
-            rel = img_file.relative_to(IMAGES_ROOT)
-            mask_file   = (MASKS_ROOT  / rel).with_suffix(".png")
-            output_file = (OUTPUT_ROOT / rel).with_suffix(".png")
-            output_file.parent.mkdir(parents=True, exist_ok=True)
-
-            if not mask_file.exists():
-                # Keine zugehörige Maske -> überspringen
-                continue
-
-            # Falls bereits bereinigt vorhanden: als Paar aufnehmen und weiter
-            if output_file.exists():
-                skipped += 1
-                processed_pairs.append((img_file, mask_file, output_file))
-                continue
-
-            # Originalgröße fürs Cropping holen
-            ow, oh = get_original_dimensions_cv2(img_file)
-            if ow is None:
-                errors += 1
-                continue
-
-            # Maske laden & Padding wegschneiden + säubern
-            mask = cv2.imread(str(mask_file), cv2.IMREAD_GRAYSCALE)
-            if mask is None:
-                print(f"⚠️ Could not read mask: {mask_file}")
-                errors += 1
-                continue
-
-            cut = cut_mask_padding(mask, ow, oh, SIDE_PADDING_RATIO)
-            cleaned = post_clean(cut, min_area=1500, open_ks=3, close_ks=7)
-
-            cv2.imwrite(str(output_file), cleaned)
-            processed += 1
-            processed_pairs.append((img_file, mask_file, output_file))
-
-        except Exception as e:
-            print(f"⚠️ Error processing {img_file}: {e}")
-            errors += 1
-
-    print(f"\n✅ Results:")
-    print(f"   Processed: {processed}")
-    print(f"   Skipped (already exists): {skipped}")
-    print(f"   Errors: {errors}")
-    print(f"   Output directory: {OUTPUT_ROOT}")
-
-    return processed_pairs
 
 
 def letterbox_image_with_side_padding(image, padding_color=(0, 0, 0), side_padding_ratio=SIDE_PADDING_RATIO):
@@ -438,7 +383,8 @@ def collect_pairs_from_roots(
     img_paths = [p for p in IMAGES_ROOT.rglob("*") if p.suffix.lower() in image_exts]
 
     for img_file in img_paths:
-        rel = img_file.relative_to(IMAGES_ROOT)
+        rel = img_file.relative_to(img_root)
+        out_path = (OUTPUT_ROOT / rel).with_suffix(".png")
 
         # look for original & cleaned masks with any allowed mask suffix
         orig_mask    = first_existing(MASKS_ROOT  / rel, mask_exts)
@@ -455,22 +401,47 @@ def collect_pairs_from_roots(
     return pairs
 
 if __name__ == "__main__":
-    # Process all masks
-    # pairs = process_masks()
-    # visualize_examples(pairs, n=8, seed=42, resize=288) 
+    IMAGE_ROOTS = [
+        Path("/opt/whizcart/shared/carrefour_classes/images/merci_raw"),
+        Path("/opt/whizcart/shared/carrefour_classes/images/gemuese_netz/raw"),
+        Path("/opt/whizcart/shared/carrefour_classes/images/head_and_shoulders_sub_sarah/raw"),
+        Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah/raw"),
+    ]
 
-    # Falls du nur visualisieren willst (ohne neu zu prozessieren):
-    pairs2 = collect_pairs_from_roots(
-    "/home/sarah/Documents/background_segmentation/dataset/images_pseudo",
-    "/home/sarah/Documents/background_segmentation/dataset/pseudo_masks",
-    "/home/sarah/Documents/background_segmentation/dataset/pseudo_masks_cleaned",
-    )
-    print(f"found {len(pairs2)} pairs")
+    # IMAGE_ROOTS = [Path("/home/sarah/Documents/background_segmentation/dataset/images_hard")
+                #    ]
+    MASKS_ROOT = Path("/home/sarah/background_segmentation/dataset/mixed_pseudo_clean")
 
+    # MASKS_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/masks_hard")
+    OUTPUT_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/mixed_pseudo_clean_unlettered")
 
-    # Save each pair’s 3-column figure here:
-    preview_dir = Path(OUTPUT_ROOT) / "_pair_previews"
-    saved_paths = visualize_examples_to_files(pairs2, out_dir=preview_dir, n=None, seed=42, resize=288)
+    all_pairs = []
+    for img_root in IMAGE_ROOTS:
+        pairs = collect_pairs_from_roots(
+            img_root,
+            MASKS_ROOT,
+            OUTPUT_ROOT,
+            require_cleaned=False,  # we are going to generate them
+        )
+        all_pairs.extend(pairs)
 
-    # (optional) open the folder in your file browser
-    print(preview_dir)
+    print(f"🔍 Total found pairs across all roots: {len(all_pairs)}")
+
+    # Now process the masks for all image roots
+    processed = []
+    for (img_file, orig_mask, _) in tqdm(all_pairs, desc="Cutting padding"):
+        try:
+            ow, oh = get_original_dimensions_cv2(img_file)
+            mask = cv2.imread(str(orig_mask), cv2.IMREAD_GRAYSCALE)
+            cut = cut_mask_padding(mask, ow, oh, SIDE_PADDING_RATIO)
+
+            rel = img_file.relative_to(img_root)
+            out_path = (OUTPUT_ROOT / rel).with_suffix(".png")
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+
+            cv2.imwrite(str(out_path), cut)
+            processed.append((img_file, orig_mask, out_path))
+        except Exception as e:
+            print(f"⚠️ Error processing {img_file}: {e}")
+
+    print(f"✅ Done. Wrote {len(processed)} cleaned masks into {OUTPUT_ROOT}")
