@@ -18,8 +18,8 @@ from tqdm import tqdm
 # OUT_ROOT    = Path("~/sarah/background_segmentation/dataset/masks_hard").expanduser()
 
 IMAGES_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah/raw")
-MASKS_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/pseudo_masks_ariel")
-OUT_ROOT    = Path("/home/sarah/Documents/background_segmentation/dataset/pseudo_masks_ariel_cleaned")
+MASKS_ROOT = Path("~/sarah/background_segmentation/dataset/pseudo_masks_ariel")
+OUT_ROOT    = Path("~/sarah/background_segmentation/dataset/pseudo_masks_ariel_cleaned")
 
 SIDE_PADDING_RATIO = 0.1   # horizontal padding fraction
 OPEN_KS  = 3               # morph open kernel size
