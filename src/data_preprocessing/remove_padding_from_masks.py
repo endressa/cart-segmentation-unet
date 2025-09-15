@@ -11,17 +11,17 @@ SIDE_PADDING_RATIO = 0.1
     # Paths
 # IMAGES_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/images_pseudo")
 
-IMAGE_ROOTS = [
-    Path("/opt/whizcart/shared/carrefour_classes/images/merci_raw"),
-    Path("/opt/whizcart/shared/carrefour_classes/images/gemuese_netz/raw"),
-    Path("/opt/whizcart/shared/carrefour_classes/images/head_and_shoulders_sub_sarah/raw"),
-    Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah/raw"),
-]
+# IMAGE_ROOTS = [
+#     Path("/opt/whizcart/shared/carrefour_classes/images/merci_raw"),
+#     Path("/opt/whizcart/shared/carrefour_classes/images/gemuese_netz/raw"),
+#     Path("/opt/whizcart/shared/carrefour_classes/images/head_and_shoulders_sub_sarah/raw"),
+#     Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah/raw"),
+# ]
 
-MASKS_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/mixed_pseudo_clean")
-OUTPUT_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/mixed_pseudo_clean_unlettered")
+# MASKS_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/mixed_pseudo_clean")
+# OUTPUT_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/mixed_pseudo_clean_unlettered")
 
-OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
+# OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
 
 def calculate_content_boundaries(orig_w, orig_h, final_w, final_h, side_padding_ratio=SIDE_PADDING_RATIO):
     # 1) Seitpadding
