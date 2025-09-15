@@ -408,13 +408,9 @@ if __name__ == "__main__":
 
     all_pairs = []
     for img_root in IMAGE_ROOTS:
-        pairs = collect_pairs_from_roots(
-            img_root,
-            MASKS_ROOT,
-            OUTPUT_ROOT,
-            require_cleaned=False,  # we are going to generate them
-        )
+        pairs = collect_pairs_from_roots(img_root, MASKS_ROOT, OUTPUT_ROOT, require_cleaned=False)
         all_pairs.extend(pairs)
+
 
     print(f"🔍 Total found pairs across all roots: {len(all_pairs)}")
 
