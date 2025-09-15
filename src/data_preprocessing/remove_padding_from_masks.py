@@ -392,13 +392,14 @@ def collect_pairs_from_roots(
 
 
 if __name__ == "__main__":
-    # IMAGE_ROOTS = [
-    #     Path("/opt/whizcart/shared/carrefour_classes/images/merci_raw"),
-    #     Path("/opt/whizcart/shared/carrefour_classes/images/gemuese_netz/raw"),
-    #     Path("/opt/whizcart/shared/carrefour_classes/images/head_and_shoulders_sub_sarah/raw"),
-    #     Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah/raw"),
-    # ]
-    IMAGE_ROOTS = [Path("/opt/whizcart/shared/carrefour_classes/images")]
+    IMAGE_ROOTS = [
+        Path("/opt/whizcart/shared/carrefour_classes/images/merci_raw"),
+        Path("/opt/whizcart/shared/carrefour_classes/images/gemuese_netz/raw"),
+        Path("/opt/whizcart/shared/carrefour_classes/images/head_and_shoulders_sub_sarah/raw"),
+        Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah/raw"),
+    ]
+    
+    # IMAGE_ROOTS = [Path("/opt/whizcart/shared/carrefour_classes/images")]
 
 
     # IMAGE_ROOTS = [Path("/home/sarah/Documents/background_segmentation/dataset/images_hard")
