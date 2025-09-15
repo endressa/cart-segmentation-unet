@@ -386,7 +386,7 @@ def collect_pairs_from_roots(
         if require_cleaned and cleaned_mask is None:
             continue
 
-        pairs.append((img_file, orig_mask, cleaned_mask))
+        pairs.append((img_file, orig_mask, cleaned_mask, img_root))
 
     return pairs
 
@@ -411,12 +411,8 @@ if __name__ == "__main__":
         pairs = collect_pairs_from_roots(img_root, MASKS_ROOT, OUTPUT_ROOT, require_cleaned=False)
         all_pairs.extend(pairs)
 
-
-    print(f"🔍 Total found pairs across all roots: {len(all_pairs)}")
-
-    # Now process the masks for all image roots
-    processed = []
-    for (img_file, orig_mask, _) in tqdm(all_pairs, desc="Cutting padding"):
+    count = 0
+    for (img_file, orig_mask, _, img_root) in tqdm(all_pairs, desc="Cutting padding"):
         try:
             ow, oh = get_original_dimensions_cv2(img_file)
             mask = cv2.imread(str(orig_mask), cv2.IMREAD_GRAYSCALE)
@@ -427,8 +423,8 @@ if __name__ == "__main__":
             out_path.parent.mkdir(parents=True, exist_ok=True)
 
             cv2.imwrite(str(out_path), cut)
-            processed.append((img_file, orig_mask, out_path))
+            count += 1
         except Exception as e:
             print(f"⚠️ Error processing {img_file}: {e}")
 
-    print(f"✅ Done. Wrote {len(processed)} cleaned masks into {OUTPUT_ROOT}")
+    print(f"✅ Done. Wrote {count} cleaned masks into {OUTPUT_ROOT}")
