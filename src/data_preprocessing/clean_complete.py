@@ -17,9 +17,9 @@ from tqdm import tqdm
 # MASKS_ROOT  = Path("/home/ansible/sarah/background_segmentation/dataset/masks_hard").expanduser()
 # OUT_ROOT    = Path("~/sarah/background_segmentation/dataset/masks_hard").expanduser()
 
-IMAGES_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah/raw")
-MASKS_ROOT = Path("~/sarah/background_segmentation/dataset/pseudo_masks_ariel")
-OUT_ROOT    = Path("~/sarah/background_segmentation/dataset/pseudo_masks_ariel_cleaned")
+IMAGES_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah/raw").expanduser()
+MASKS_ROOT = Path("~/sarah/background_segmentation/dataset/pseudo_masks_ariel").expanduser()
+OUT_ROOT    = Path("~/sarah/background_segmentation/dataset/pseudo_masks_ariel_cleaned").expanduser()
 
 SIDE_PADDING_RATIO = 0.1   # horizontal padding fraction
 OPEN_KS  = 3               # morph open kernel size
