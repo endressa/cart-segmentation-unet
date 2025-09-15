@@ -30,12 +30,11 @@ import segmentation_models_pytorch as smp  # pip install segmentation-models-pyt
 # CONFIG
 # ────────────────────────────────────────────────────────────────────────────────
 IMAGE_ROOTS = [
-    Path("/opt/whizcart/shared/carrefour_classes/images/merci"),
-    Path("/opt/whizcart/shared/carrefour_classes/images/gemuese_netz"),
-    Path("/opt/whizcart/shared/carrefour_classes/images/head_and_shoulders_sub_sarah"),
-    Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah"),
-
-]
+        Path("/opt/whizcart/shared/carrefour_classes/images/merci/raw"),
+        Path("/opt/whizcart/shared/carrefour_classes/images/gemuese_netz/raw"),
+        Path("/opt/whizcart/shared/carrefour_classes/images/head_and_shoulders_sub_sarah/raw"),
+        Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah/raw"),
+    ]
 MASKS_ROOT = Path("/home/ansible/sarah/background_segmentation/dataset/mixed_pseudo_clean_unlettered")
 
 CHECKPOINT_PATH = Path("~/sarah/background_segmentation/checkpoints_pretrained/BCEDiceABL_pseudo_unlettered.pth").expanduser()
