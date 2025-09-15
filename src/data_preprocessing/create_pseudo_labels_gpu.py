@@ -11,15 +11,24 @@ from albumentations.pytorch import ToTensorV2
 import segmentation_models_pytorch as smp
 
 # ---------------- CONFIG ----------------
-CHECKPOINTS = [
-    Path("~/sarah/background_segmentation/checkpoints_pretrained/finetuned_model_15.pth").expanduser(),
-    Path("~/sarah/background_segmentation/checkpoints_pretrained/finetuned_model_14.pth").expanduser(),
-    Path("~/sarah/background_segmentation/checkpoints_pretrained/finetuned_model_12.pth").expanduser(),
-]
-ENSEMBLE_WEIGHTS = [0.5, 0.25, 0.25]  # must match CHECKPOINTS length
+# CHECKPOINTS = [
+#     Path("~/sarah/background_segmentation/checkpoints_pretrained/finetuned_model_15.pth").expanduser(),
+#     Path("~/sarah/background_segmentation/checkpoints_pretrained/finetuned_model_14.pth").expanduser(),
+#     Path("~/sarah/background_segmentation/checkpoints_pretrained/finetuned_model_12.pth").expanduser(),
+    
+# ]
 
-RELEVANT_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/head_and_shoulders_sub_sarah").expanduser()
-OUT_DIR = Path("~/sarah/background_segmentation/dataset/pseudo_masks_head_and shoulders").expanduser()
+CHECKPOINTS = [
+    Path("~/sarah/background_segmentation/checkpoints_pretrained/finetuned_BCEDiceABL_pseudo.pth").expanduser(),
+    
+]
+
+# ENSEMBLE_WEIGHTS = [0.5, 0.25, 0.25]  # must match CHECKPOINTS length
+
+ENSEMBLE_WEIGHTS = [1]
+
+RELEVANT_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah/raw").expanduser()
+OUT_DIR = Path("~/sarah/background_segmentation/dataset/pseudo_masks_ariel").expanduser()
 UNCERTAIN_DIR = OUT_DIR / "uncertain"
 OVERLAY_DIR = Path("~/sarah/background_segmentation/preds_overlay_mixed").expanduser()
 OUT_DIR.mkdir(parents=True, exist_ok=True)

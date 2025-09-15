@@ -13,13 +13,13 @@ from tqdm import tqdm
 
 #  gemuese_netz
 # ----------------------- HARD CODED CONFIG -----------------------
-IMAGES_ROOT = Path("/home/ansible/sarah/background_segmentation/dataset/images_hard").expanduser()
-MASKS_ROOT  = Path("/home/ansible/sarah/background_segmentation/dataset/masks_hard").expanduser()
-OUT_ROOT    = Path("~/sarah/background_segmentation/dataset/masks_hard").expanduser()
+# IMAGES_ROOT = Path("/home/ansible/sarah/background_segmentation/dataset/images_hard").expanduser()
+# MASKS_ROOT  = Path("/home/ansible/sarah/background_segmentation/dataset/masks_hard").expanduser()
+# OUT_ROOT    = Path("~/sarah/background_segmentation/dataset/masks_hard").expanduser()
 
-# IMAGES_ROOT = Path("/home/sarah/Documents/background_segmentation/head_and_shoulders_sarah/head_and_shoulders_sub_sarah")
-# MASKS_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/pseudo_masks_15/head_and_shoulders_sub_sarah")
-# OUT_ROOT    = Path("/home/sarah/Documents/background_segmentation/dataset/pseudo_masks_head_and shoulders_cleaned")
+IMAGES_ROOT = Path("/opt/whizcart/shared/carrefour_classes/images/ariel_sarah/ariel_sarah/raw")
+MASKS_ROOT = Path("/home/sarah/Documents/background_segmentation/dataset/pseudo_masks_ariel")
+OUT_ROOT    = Path("/home/sarah/Documents/background_segmentation/dataset/pseudo_masks_ariel_cleaned")
 
 SIDE_PADDING_RATIO = 0.1   # horizontal padding fraction
 OPEN_KS  = 3               # morph open kernel size
